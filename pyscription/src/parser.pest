@@ -1,0 +1,80 @@
+// parser.pest documents the grammar used by Pyscription's extractor.
+
+// program := SOI item* EOI
+program = { SOI ~ item* ~ EOI }
+
+// item := function_def | class_def | docstring | import_stmt | comment_line | skip
+item = _{ function_def | class_def | docstring | import_stmt | comment_line | skip }
+
+// function_def := decorator lines + optional async + def signature (single line)
+function_def = @{
+    decorator_line* ~ indentation? ~ async_prefix? ~ "def" ~ WHITESPACE+ ~ identifier ~ function_signature_tail
+}
+
+// class_def := decorator lines + class signature (single line, supports inheritance)
+class_def = @{
+    decorator_line* ~ indentation? ~ "class" ~ WHITESPACE+ ~ identifier ~ class_signature_tail
+}
+
+// decorator_line := single line starting with "@"
+decorator_line = @{
+    indentation? ~ "@" ~ (!NEWLINE ~ ANY)* ~ NEWLINE
+}
+
+// async_prefix := literal "async " before def keyword
+async_prefix = @{ "async" ~ WHITESPACE+ }
+
+// function_signature_tail := rest of signature up to newline/EOF
+function_signature_tail = @{ (!NEWLINE ~ ANY)* ~ NEWLINE? }
+
+// class_signature_tail := rest of the class declaration line (bases, colon, newline)
+class_signature_tail = @{ (!NEWLINE ~ ANY)* ~ NEWLINE? }
+
+// docstring := indentation? triple_quote docstring_body? triple_quote
+docstring = @{ indentation? ~ triple_quote ~ docstring_body? ~ triple_quote }
+
+// triple_quote := """ literal
+triple_quote = @{ "\"\"\"" }
+
+// docstring_body := every char except the closing triple-quote
+docstring_body = @{ (!"\"\"\"" ~ ANY)* }
+
+// import_stmt := indentation? (plain_import | from_import) trailing text
+import_stmt = @{ indentation? ~ (plain_import | from_import) ~ NEWLINE? }
+
+// plain_import := "import" target list
+plain_import = @{ "import" ~ WHITESPACE+ ~ import_targets }
+
+// from_import := "from" source "import" targets
+from_import = @{
+    "from" ~ WHITESPACE+ ~ import_source ~ WHITESPACE+ ~ "import" ~ WHITESPACE+ ~ import_targets
+}
+
+// import_source := token until whitespace
+import_source = { (!WHITESPACE ~ ANY)+ }
+
+// import_targets := token(s) until newline
+import_targets = { (!NEWLINE ~ ANY)+ }
+
+// comment_line := indentation? "#" text newline
+comment_line = @{ indentation? ~ COMMENT ~ NEWLINE? }
+
+// skip := fallback to consume any single character
+skip = { ANY }
+
+// indentation := one or more spaces/tabs
+indentation = _{ (" " | "\t")+ }
+
+// comment text up to newline
+COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* }
+
+// newline definitions (handles CRLF)
+NEWLINE = _{ "\r\n" | "\n" | "\r" }
+
+// identifier tokens for function names
+identifier = @{
+    (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")*
+}
+
+// whitespace automatically skipped between tokens (spaces/tabs only)
+WHITESPACE = _{ " " | "\t" }

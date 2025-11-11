@@ -1,0 +1,3 @@
+gemini:
+  # Replace with your actual Gemini API key or set the GEMINI_API_KEY environment variable.
+  key: REPLACE_ME

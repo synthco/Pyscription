@@ -1,0 +1,27 @@
+
+runtime:
+  cache_dir: ".cache/loadpipe"
+  state_db: ".state/manifest.sqlite"
+  cache_limit_gb: 30
+  retries: 5
+  log_dir: ".logs"
+
+auth:
+  client_secrets_path: ".secrets/client_secrets.json"
+  token_path: ".secrets/token.json"
+  scopes:
+    - "https://www.googleapis.com/auth/drive"
+
+source:
+  folder_id: "CHANGE_ME_SOURCE_FOLDER_ID"
+  pattern: "*.zst"
+
+download:
+  chunk_mb: 64
+
+process:
+  kind: "identity"
+
+upload:
+  folder_id: "CHANGE_ME_DEST_FOLDER_ID"
+  name_suffix: ""

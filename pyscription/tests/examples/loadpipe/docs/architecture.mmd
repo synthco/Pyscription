@@ -1,0 +1,79 @@
+---
+config:
+  layout: dagre
+---
+flowchart LR
+ subgraph Config["Config bootstrap"]
+        CFGDirs["Ensures runtime/cache/log dirs exist"]
+        CFG["Config.from_file()"]
+  end
+ subgraph Auth["Auth & Service wiring"]
+        AuthLogin["auth_login()"]
+        GCreds["Google credentials"]
+        AuthCreds["oauth.credentials()"]
+        GDriveSvc["gdrive.build_service()"]
+        BuildSvc["_build_service()"]
+  end
+ subgraph CLI["CLI entrypoints"]
+        ListCmd["list_cmd()"]
+        GList["gdrive.list_files()"]
+        PullCmd["pull_cmd()"]
+        DLIter["download_iter()"]
+        GStat["gdrive.stat()"]
+        Writer["_write_stream()"]
+        PushCmd["push_cmd()"]
+        ULIter["upload_iter()"]
+        SyncCmd["sync_cmd()"]
+        Processor["_processor() -> processing.identity()"]
+        SyncDone["Drive dest"]
+        PullDone["stdout/disk"]
+        Table["rich.Table rendering"]
+        PathsInfo["Print runtime paths"]
+        ConfigCheck["config_check()"]
+  end
+ subgraph Transfer["Transfer loops"]
+        ManifestUp["Manifest.upsert_download()"]
+        GRange["gdrive.download_range()"]
+        Cache["fs.atomic_write()"]
+        Log["log.log_progress()"]
+        ManifestUpload["Manifest.upsert_upload()"]
+        Session["gdrive.begin_resumable_upload()"]
+        Chunk["gdrive.upload_chunk()"]
+  end
+ subgraph State["State & logging"]
+        ManifestPath["runtime.state_db"]
+        ManifestCls["Manifest(SQLite)"]
+        Runs["run tracking helpers"]
+        JSON["JsonFormatter -> stderr & file"]
+  end
+ subgraph FSSpec["fsspec adapter"]
+        DriveFS["DriveFileSystem"]
+        FSFactory["filesystem_from_config()"]
+        Seq["DriveSequentialReader"]
+        Rand["DriveRandomAccessReader"]
+        Resource["DriveResource cache"]
+  end
+    CFG --> CFGDirs & PathsInfo & ManifestPath & n1["Untitled Node"]
+    AuthLogin --> CFG & AuthCreds
+    AuthCreds -- returns --> GCreds
+    BuildSvc --> GDriveSvc & GList
+    AuthCreds --> BuildSvc
+    ListCmd --> CFG & BuildSvc & Table
+    PullCmd --> CFG & BuildSvc & GStat
+    GStat --> DLIter
+    DLIter --> Writer & Processor & PullDone & ManifestUp & GRange & Cache & Log
+    PushCmd --> CFG & BuildSvc
+    PushCmd -. stdin .-> ULIter
+    SyncCmd --> CFG & BuildSvc & Processor
+    SyncCmd -- select newest --> GList
+    Processor --> ULIter
+    ULIter --> SyncDone & ManifestUpload & Session & Chunk & Log
+    ConfigCheck --> CFG
+    ManifestPath --> ManifestCls
+    ManifestCls -. ctx manager .-> DLIter & ULIter
+    ManifestCls --> Runs
+    Log --> JSON
+    FSFactory --> DriveFS
+    DriveFS --> Seq & Rand & Resource
+    Seq --> DLIter
+    Rand --> GRange
