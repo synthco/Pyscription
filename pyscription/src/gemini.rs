@@ -9,13 +9,13 @@ const DEFAULT_CONFIG_PATH: &str = "src/sercrets.yaml";
 const DEFAULT_ENDPOINT: &str =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
-// Trait describing the minimal Gemini client surface used by the generator layer.
+/// Trait describing the minimal Gemini client surface used by the generator layer.
 pub trait GeminiClient: Send + Sync {
-    // Produce a textual section (e.g., Introduction/Usage) for the README.
+    /// Produce a textual section (e.g., Introduction/Usage) for the README.
     fn generate_section(&self, request: &GeminiRequest) -> Result<String>;
 }
 
-// Placeholder implementation that records the API key location but does not yet perform HTTP calls.
+/// Blocking HTTP implementation that loads credentials and contacts the Gemini endpoint.
 pub struct RealGeminiClient {
     api_key: String,
     endpoint: String,
@@ -79,6 +79,7 @@ pub struct MockGeminiClient {
 }
 
 impl MockGeminiClient {
+    /// Seed the in-memory mock with responses that will be popped in FIFO order.
     pub fn with_responses(responses: Vec<String>) -> Self {
         Self {
             responses: Mutex::new(responses),
@@ -105,6 +106,7 @@ pub struct GeminiRequest {
 }
 
 impl GeminiRequest {
+    /// Build a request by pairing human-readable instructions with the structured payload.
     pub fn new(instructions: impl Into<String>, payload_json: Value) -> Self {
         Self {
             instructions: instructions.into(),
