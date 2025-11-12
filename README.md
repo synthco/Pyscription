@@ -2,6 +2,8 @@
 
 Pyscription is a Rust CLI that walks Python projects, extracts deterministic API facts, and spends LLM tokens only on the prose that still needs a human touch. The tool records every function, class, import, and docstring that the grammar encounters, then assembles a README draft that is dramatically cheaper than sending an entire repository to a model.
 
+Crate link: https://crates.io/crates/pyscription
+
 ---
 ## Key Capabilities
 - Recursively scan any `.py` file or directory, autodetect the module root using workspace markers (`pyproject.toml`, `setup.cfg`, `.git`), or honor an explicit `--module-root DIR`.
@@ -30,7 +32,7 @@ docstring = @{ indentation? ~ triple_quote ~ docstring_body? ~ triple_quote }
 import_stmt = @{ indentation? ~ (plain_import | from_import) ~ NEWLINE? }
 ```
 ## Quick Start
-Run everything from the repository root:
+Run everything from pyscription's root directory:
 
 ```bash
 make run FILE=tests/examples/download.py
